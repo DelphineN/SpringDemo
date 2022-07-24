@@ -1,41 +1,17 @@
-// pipeline{
-//     agent { dockerfile true}
-//     stages{
-//         stage('Test') {
-//             steps {
-//                 sh '''
-//                 docker --version
-//                 git --version
-//                 '''
-//             }
-//         }
-//     }
-   
-// }
+podTemplate(containers: [
+    containerTemplate(name: 'maven', image: 'maven:3.8.1-jdk-8', command: 'sleep', args: '99d'
+  )]
+  ) {
 
-node {
-    def app
-
-    stage('Clone repository') {
-        /* Let's make sure we have the repository cloned to our workspace */
-
-        checkout scm
-    }
-
-    stage('Build image') {
-        /* This builds the actual image; synonymous to
-         * docker build on the command line */
-
-        app = docker.build("getintodevops/hellonode")
-    }
-
-    stage('Test image') {
-        /* Ideally, we would run a test framework against our image.
-         * For this example, we're using a Volkswagen-type approach ;-) */
-
-        app.inside {
-            sh 'echo "Tests passed"'
+    node(POD_LABEL) {
+        stage('Get a Maven project') {
+            git 'https://github.com/DelphineN/SpringDemo.git'
+            container('maven') {
+                stage('Build a Maven project') {
+                    sh 'mvn -B -ntp clean install'
+                }
+            }
         }
-    }
 
+    }
 }
